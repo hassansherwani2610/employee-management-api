@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: employee-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: employee_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - ems_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d employee_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  ems_postgres_data:
