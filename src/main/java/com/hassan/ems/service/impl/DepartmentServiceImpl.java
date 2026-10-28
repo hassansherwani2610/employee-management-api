@@ -5,10 +5,12 @@ import com.hassan.ems.dto.response.DepartmentResponse;
 import com.hassan.ems.dto.response.PageResponse;
 import com.hassan.ems.entity.Department;
 import com.hassan.ems.exception.BadRequestException;
+import com.hassan.ems.exception.ConflictException;
 import com.hassan.ems.exception.DuplicateResourceException;
 import com.hassan.ems.exception.ResourceNotFoundException;
 import com.hassan.ems.mapper.DepartmentMapper;
 import com.hassan.ems.repository.DepartmentRepository;
+import com.hassan.ems.repository.EmployeeRepository;
 import com.hassan.ems.service.DepartmentService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
@@ -27,10 +29,12 @@ public class DepartmentServiceImpl implements DepartmentService {
     private static final Set<String> SORTABLE_FIELDS = Set.of("id", "name", "code", "createdAt", "updatedAt");
 
     private final DepartmentRepository departmentRepository;
+    private final EmployeeRepository employeeRepository;
     private final DepartmentMapper departmentMapper;
 
-    public DepartmentServiceImpl(DepartmentRepository departmentRepository, DepartmentMapper departmentMapper) {
+    public DepartmentServiceImpl(DepartmentRepository departmentRepository, EmployeeRepository employeeRepository, DepartmentMapper departmentMapper) {
         this.departmentRepository = departmentRepository;
+        this.employeeRepository = employeeRepository;
         this.departmentMapper = departmentMapper;
     }
 
@@ -91,9 +95,12 @@ public class DepartmentServiceImpl implements DepartmentService {
     @Transactional
     public DepartmentResponse update(Long id, DepartmentRequest request) {
         Department department = findOrThrow(id);
-        departmentMapper.updateEntity(department, request);
-        checkFieldsUniqueness(department.getName(), department.getCode(), id);
 
+        String name = departmentMapper.normalizeName(request.getName());
+        String code = departmentMapper.normalizeCode(request.getCode());
+        checkFieldsUniqueness(name, code, id);
+
+        departmentMapper.updateEntity(department, request);
         Department savedRequest = departmentRepository.saveAndFlush(department);
         log.info("Department updated: id={}", id);
         return departmentMapper.toResponse(savedRequest);
@@ -103,6 +110,10 @@ public class DepartmentServiceImpl implements DepartmentService {
     @Transactional
     public void delete(Long id) {
         Department department = findOrThrow(id);
+        if (employeeRepository.existsByDepartmentId(id)) {
+            throw new ConflictException("Cannot delete department '%s' because it still has employees".formatted(department.getName()));
+        }
+
         departmentRepository.delete(department);
         log.info("Department deleted: id={}", id);
     }

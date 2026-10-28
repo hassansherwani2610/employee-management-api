@@ -8,7 +8,11 @@ import org.springframework.stereotype.Component;
 @Component
 public class DepartmentMapper {
 
-    private String normalizeCode(String code) {
+    public String normalizeName(String name) {
+        return name.trim();
+    }
+
+    public String normalizeCode(String code) {
         return code.trim().toUpperCase();
     }
 
