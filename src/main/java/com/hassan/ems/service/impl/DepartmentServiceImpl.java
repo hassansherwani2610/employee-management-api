@@ -22,7 +22,6 @@ import java.util.Set;
 
 @Slf4j
 @Service
-@Transactional(readOnly = true)
 public class DepartmentServiceImpl implements DepartmentService {
 
     private static final String RESOURCE = "Department";
