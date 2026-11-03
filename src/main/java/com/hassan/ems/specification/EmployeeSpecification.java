@@ -7,6 +7,8 @@ import org.springframework.data.jpa.domain.Specification;
 
 public final class EmployeeSpecification {
 
+    private EmployeeSpecification() {}
+
     public static Specification<Employee> search(String term) {
         return (root, query, cb) -> {
             String pattern = "%" + escapeLike(term.toLowerCase()) + "%";
