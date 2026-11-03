@@ -3,10 +3,14 @@ package com.hassan.ems.controller;
 import com.hassan.ems.dto.request.EmployeeRequest;
 import com.hassan.ems.dto.response.ApiResponse;
 import com.hassan.ems.dto.response.EmployeeResponse;
+import com.hassan.ems.dto.response.PageResponse;
+import com.hassan.ems.enums.EmploymentStatus;
 import com.hassan.ems.service.EmployeeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -34,7 +38,17 @@ public class EmployeeController {
         return ResponseEntity.ok(ApiResponse.success("Employee fetched successfully", employeeService.getById(id)));
     }
 
-    // Specs one
+    @GetMapping("/employees")
+    @Operation(summary = "List employees (search, filter by department/status, paginated, sortable)")
+    public ResponseEntity<ApiResponse<PageResponse<EmployeeResponse>>> getAll(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Long departmentId,
+            @RequestParam(required = false) EmploymentStatus status,
+            @PageableDefault(size = 10, sort = "firstName") Pageable pageable) {
+        return ResponseEntity
+                .ok(ApiResponse.success("Employees fetched successfully",
+                employeeService.getAll(search, departmentId, status, pageable)));
+    }
 
     @PutMapping("/employees/{id}")
     @Operation(summary = "Update an employee")

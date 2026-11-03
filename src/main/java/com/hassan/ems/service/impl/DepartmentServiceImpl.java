@@ -50,7 +50,7 @@ public class DepartmentServiceImpl implements DepartmentService {
         });
     }
 
-    private void checkFieldsUniqueness(String name, String code, Long id) {
+    private void assertUniqueFields(String name, String code, Long id) {
         boolean nameTaken = (id == null ? departmentRepository.existsByNameIgnoreCase(name) : departmentRepository.existsByNameIgnoreCaseAndIdNot(name, id));
 
         if (nameTaken) {
@@ -69,7 +69,7 @@ public class DepartmentServiceImpl implements DepartmentService {
     @Transactional
     public DepartmentResponse create(DepartmentRequest request) {
         Department department = departmentMapper.toEntity(request);
-        checkFieldsUniqueness(department.getName(), department.getCode(), null);
+        assertUniqueFields(department.getName(), department.getCode(), null);
 
         Department savedRequest = departmentRepository.save(department);
         log.info("Department created: id={}, code={}", savedRequest.getId(), savedRequest.getCode());
@@ -97,7 +97,7 @@ public class DepartmentServiceImpl implements DepartmentService {
 
         String name = departmentMapper.normalizeName(request.getName());
         String code = departmentMapper.normalizeCode(request.getCode());
-        checkFieldsUniqueness(name, code, id);
+        assertUniqueFields(name, code, id);
 
         departmentMapper.updateEntity(department, request);
         Department savedRequest = departmentRepository.saveAndFlush(department);
