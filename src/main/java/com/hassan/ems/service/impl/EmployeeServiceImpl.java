@@ -7,11 +7,13 @@ import com.hassan.ems.entity.Department;
 import com.hassan.ems.entity.Employee;
 import com.hassan.ems.enums.EmploymentStatus;
 import com.hassan.ems.exception.BadRequestException;
+import com.hassan.ems.exception.ConflictException;
 import com.hassan.ems.exception.DuplicateResourceException;
 import com.hassan.ems.exception.ResourceNotFoundException;
 import com.hassan.ems.mapper.EmployeeMapper;
 import com.hassan.ems.repository.DepartmentRepository;
 import com.hassan.ems.repository.EmployeeRepository;
+import com.hassan.ems.repository.LeaveRequestRepository;
 import com.hassan.ems.service.EmployeeService;
 import com.hassan.ems.specification.EmployeeSpecification;
 import lombok.extern.slf4j.Slf4j;
@@ -32,11 +34,13 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     private final EmployeeRepository employeeRepository;
     private final DepartmentRepository departmentRepository;
+    private final LeaveRequestRepository leaveRequestRepository;
     private final EmployeeMapper employeeMapper;
 
-    public EmployeeServiceImpl(EmployeeRepository employeeRepository, DepartmentRepository departmentRepository, EmployeeMapper employeeMapper) {
+    public EmployeeServiceImpl(EmployeeRepository employeeRepository, DepartmentRepository departmentRepository, LeaveRequestRepository leaveRequestRepository, EmployeeMapper employeeMapper) {
         this.employeeRepository = employeeRepository;
         this.departmentRepository = departmentRepository;
+        this.leaveRequestRepository = leaveRequestRepository;
         this.employeeMapper = employeeMapper;
     }
 
@@ -128,6 +132,9 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Transactional
     public void delete(Long id) {
         Employee employee = findOrThrow(id);
+        if (leaveRequestRepository.existsByEmployeeId(id)) {
+            throw new ConflictException("Cannot delete an employee who has leave requests. Set the status to TERMINATED instead.");
+        }
         employeeRepository.delete(employee);
         log.info("Employee deleted: id={}", id);
     }
